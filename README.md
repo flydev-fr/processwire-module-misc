@@ -14,7 +14,7 @@ Eg. in *templates/padloper/cart-edit.php*:
 
   foreach($shipping_fees as $country => $price) {
     if($country == '*') {
-      $country = __("Others");
+      $country = __("Elsewhere");
     }
 
     $price = $cart->renderPriceAndCurrency($price);

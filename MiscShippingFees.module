@@ -39,7 +39,6 @@ class MiscShippingFees extends WireData implements Module {
   }
 
 
-
   /***********/
   /** HOOKS **/
   /***********/
