@@ -19,7 +19,7 @@ Eg. in *templates/padloper/cart-edit.php*:
 
     $price = $cart->renderPriceAndCurrency($price);
 
-    echo "<tr><td>{$country}</td><td>{$price}</td></tr>";
+    echo "<tr><td>{$country}</td><td class='miscshippingfees-price'>{$price}</td></tr>";
   }
 
   echo '</table>';
