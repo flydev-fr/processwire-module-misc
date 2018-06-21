@@ -1,0 +1,135 @@
+<?php
+
+/* Copyright (C) 2018 Julien Vaubourg <julien@vaubourg.com>
+ * Contribute at https://github.com/jvaubourg/processwire-module-misc
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+class MiscShippingFees extends WireData implements Module {
+  private $cart_tpl_name = 'cart';
+
+  public static function getModuleInfo() {
+    return array(
+      'title' => 'Misc - Shipping Fees Information',
+      'version' => 1,
+      'summary' => 'Show shipping fees information',
+      'icon' => 'angellist',
+      'href' => 'https://github.com/jvaubourg/processwire-module-misc',
+      'author' => 'Julien Vaubourg',
+      'singular' => true,
+      'autoload' => true,
+      'requires' => 'PadLoper',
+    );
+  }
+
+  public function init() {
+    $this->addHookAfter('Page::render', $this, 'addScriptsAndStyles');
+  }
+
+
+
+  /***********/
+  /** HOOKS **/
+  /***********/
+
+  /**
+   * Add some JS and css in the header of every PadOpt product page and page
+   * of the PadLoper admin
+   * Act before Page::render
+   */
+  public function addScriptsAndStyles($event) {
+    $page = $event->object; 
+    $module_url = $this->config->urls->siteModules . basename(__DIR__);
+    $root_url = $_SERVER['DOCUMENT_ROOT'];
+
+    $scripts = '';
+    $styles = '';
+
+    // Only for the cart page
+    if($page->template->name == $this->cart_tpl_name) {
+      $styles .= "<link type='text/css' href='{$module_url}/templates/styles/MiscShippingFees.css' rel='stylesheet' />";
+    }
+
+    if(!empty($styles.$scripts)) {
+      $event->return = str_replace('</head>', "{$styles}{$scripts}</head>", $event->return); 
+    }
+  }
+
+
+  /**********************/
+  /** PUBLIC FUNCTIONS **/
+  /**********************/
+
+  // inspired from PadLoper->___getShippingFee
+  public function getShippingFees($p) {
+    $qty = $p->qty;
+
+    $pad_shipping = $p->pad_shipping;
+    $pad_shipping_rates = $p->pad_shipping->get('pad_shipping_rates');
+    $shipping_rates = array();
+
+    foreach($pad_shipping_rates as $pad_shipping_rate) {
+      $shipping_rate = array();
+
+      $shipping_rate['country'] = $pad_shipping_rate->get('pad_countrycode');
+      $shipping_rate['price'] = $pad_shipping_rate->pad_price;
+
+      $pad_price_variations = trim($pad_shipping_rate->pad_price_variations);
+      
+      if(!empty($pad_price_variations)) {
+        $pad_price_variations_array = explode(PHP_EOL, $pad_price_variations);
+
+        foreach($pad_price_variations_array as $variation) {
+          $variation_array = explode('=', $variation);
+          $price = $variation_array[1];
+
+          if(is_numeric($price)) {
+            $qty_array = explode(':', $variation_array[0]);
+            $min_qty = $qty_array[0];
+            $max_qty = $qty_array[1];
+
+            if($qty >= $min_qty && $qty <= $max_qty) {
+              $shipping_rate['price'] = $price;
+              break;
+            }
+          }
+        }
+      }
+
+      $shipping_rates[] = $shipping_rate;
+    }
+
+    return $shipping_rates;
+  }
+
+  public function getTotalShippingFees($products) {
+    $total_shipping_rates = array();
+
+    foreach($products as $p) {
+      $product_shipping_rates = $this->getShippingFees($p);
+
+      foreach($product_shipping_rates as $product_shipping_rate) {
+        if(array_key_exists($product_shipping_rate['country'], $total_shipping_rates)) {
+          $total_shipping_rates[$product_shipping_rate['country']] += $product_shipping_rate['price'];
+
+        } else {
+          $total_shipping_rates[$product_shipping_rate['country']] = $product_shipping_rate['price'];
+        }
+      }
+    }
+
+    return $total_shipping_rates;
+  }
+}

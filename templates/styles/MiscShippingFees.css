@@ -1,0 +1,25 @@
+.misc-shipping-fees {
+  text-align: right;
+  float: left;
+  width: 100%;
+  margin-top: 1em;
+}
+
+.misc-shipping-fees table {
+  margin: .5em 0 0 auto;
+}
+
+.misc-shipping-fees th {
+  font-weight: bold;
+}
+
+.misc-shipping-fees td, .misc-shipping-fees th {
+  padding: .3em;
+  border: 1px solid #000;
+}
+
+.misc-shipping-fees th {
+  text-align: center;
+  border-bottom-width: 2px;
+  padding: .4em;
+}
