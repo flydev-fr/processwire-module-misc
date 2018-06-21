@@ -10,7 +10,7 @@ Eg. in *templates/padloper/cart-edit.php*:
   $shipping = $this->modules->get('MiscShippingFees');
   $shipping_fees = $shipping->getTotalShippingFees($items);
 
-  echo '<table><th colspan="2">' . __("Shipping") . '</th>';
+  echo '<table><th colspan="2">+ ' . __('Shipping') . ' (' . __("incl. VAT") . ')</th>';
 
   foreach($shipping_fees as $country => $price) {
     if($country == '*') {
