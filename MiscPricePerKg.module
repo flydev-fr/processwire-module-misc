@@ -1,0 +1,113 @@
+<?php
+
+/* Copyright (C) 2018 Julien Vaubourg <julien@vaubourg.com>
+ * Contribute at https://github.com/jvaubourg/processwire-module-misc
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+class MiscPricePerKg extends WireData implements Module {
+  private $cart_tpl_name = 'cart';
+  private $unit_pattern = '/^([0-9]+[.,]?[0-9]*)\s*([a-z]{1,2})$/i';
+  private $cart;
+
+  public static function getModuleInfo() {
+    return array(
+      'title' => 'Misc - Price Per Kg',
+      'version' => 1,
+      'summary' => 'Show price per kg (or other unit) information',
+      'icon' => 'angellist',
+      'href' => 'https://github.com/jvaubourg/processwire-module-misc',
+      'author' => 'Julien Vaubourg',
+      'singular' => true,
+      'autoload' => true,
+      'requires' => 'PadLoper',
+    );
+  }
+
+  public function init() {
+    $this->cart = $this->modules->get('PadCart');
+  }
+
+
+  /**********************/
+  /** PUBLIC FUNCTIONS **/
+  /**********************/
+
+  public function hasPricePerKg($p) {
+    if($p->children->count() > 0) {
+      $first_variation = $p->children->get(0);
+      $product_size = trim($first_variation->product_size);
+
+      if(preg_match($this->unit_pattern, $product_size)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  public function getPricePerKg($variation) {
+    $product_price = (float) trim($variation->product_price);
+    $product_size = trim($variation->product_size);
+
+    preg_match($this->unit_pattern, $product_size, $matches);
+    $weight = (float) $matches[1];
+    $unit = $matches[2];
+
+    $unit_price = round($product_price / $weight, 2);
+
+    return array(
+      $product_price,
+      $weight,
+      $unit,
+      $unit_price
+    );
+  }
+
+  public function getPricePerKgMin($p) {
+    if($p->children->count() > 0) {
+      $first_variation = $p->children->get(0);
+
+      return $this->getPricePerKg($first_variation);
+    }
+  }
+
+  public function getPricePerKgMax($p) {
+    if($p->children->count() > 0) {
+      $last_variation = $p->children->get($p->children->count() - 1);
+
+      return $this->getPricePerKg($last_variation);
+    }
+  }
+
+  public function getPricePerKgIntervalText($p) {
+    $interval = $this->cart->renderPriceAndCurrency($p->product_price);
+
+    if($this->hasPricePerKg($p)) {
+      list($min_price, $min_weight, $min_unit, $min_unit_price) = $this->getPricePerKgMin($p);
+      list($max_price, $max_weight, $max_unit, $max_unit_price) = $this->getPricePerKgMax($p);
+
+      if($min_weight == $max_weight) {
+        $interval .= " ({$this->cart->renderPriceAndCurrency($min_unit_price)}/$min_unit)";
+
+      } else {
+        $interval = __("From") . " {$this->cart->renderPriceAndCurrency($min_price)} ($min_weight$min_unit, {$this->cart->renderPriceAndCurrency($min_unit_price)}/$min_unit)<br />";
+        $interval .= __("to") . " {$this->cart->renderPriceAndCurrency($max_price)} ($max_weight$max_unit, {$this->cart->renderPriceAndCurrency($max_unit_price)}/$max_unit)";
+      }
+    }
+
+    return $interval;
+  }
+}

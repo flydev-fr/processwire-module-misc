@@ -27,3 +27,31 @@ Eg. in *templates/padloper/cart-edit.php*:
     </div>
 ```
 
+## MiscPricePerKg
+
+Eg. in *site/templates/category.php* or *site/templates/products.php*:
+
+```
+<?php
+  $price_per_kg= $this->modules->get('MiscPricePerKg');
+  $price_interval = $price_per_kg->getPricePerKgIntervalText($article);
+?>
+
+<h1><?php echo $article->title ?></h1>
+<h2><strong><?= $price_interval ?></strong></h2>
+```
+
+Eg. in *site/templates/product.php*:
+
+```
+$cart = $modules->get('PadCart');
+$price_per_kg= $this->modules->get('MiscPricePerKg');
+$price_details = '';
+
+if($price_per_kg->hasPricePerKg($page)) {
+  list($price, $weight, $unit, $unit_price) = $price_per_kg->getPricePerKg($p);
+  $price_details .= " ({$cart->renderPriceAndCurrency($unit_price)}/$unit)";
+}
+
+$content .= "<input type='radio' name='product_id' value='{$p->id}' checked><div class='price'>" . $cart->renderPriceAndCurrency($p->product_price) . "</div><div class='size'> " . $p->product_size . " $price_details</div></input>";
+```
