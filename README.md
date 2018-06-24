@@ -33,23 +33,23 @@ Eg. in *site/templates/category.php* or *site/templates/products.php*:
 
 ```
 <?php
-  $price_per_kg= $this->modules->get('MiscPricePerKg');
-  $price_interval = $price_per_kg->getPricePerKgIntervalText($article);
+$price_variations= $this->modules->get('MiscVariationsPrices');
+$price = $price_variations->getVariationsPricesText($article);
 ?>
 
 <h1><?php echo $article->title ?></h1>
-<h2><strong><?= $price_interval ?></strong></h2>
+<h2><strong><?= $price ?></strong></h2>
 ```
 
 Eg. in *site/templates/product.php*:
 
 ```
 $cart = $modules->get('PadCart');
-$price_per_kg= $this->modules->get('MiscPricePerKg');
+$price_variations= $this->modules->get('MiscVariationsPrices');
 $price_details = '';
 
-if($price_per_kg->hasPricePerKg($page)) {
-  list($price, $weight, $unit, $unit_price) = $price_per_kg->getPricePerKg($p);
+if($price_variations->hasPricePerKg($page)) {
+  list($price, $weight, $unit, $unit_price) = $price_variations->getPricePerKg($p);
   $price_details .= " ({$cart->renderPriceAndCurrency($unit_price)}/$unit)";
 }
 
